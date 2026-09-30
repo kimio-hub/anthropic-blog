@@ -1,0 +1,7 @@
+# Render-check output
+*-check/
+page-check/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

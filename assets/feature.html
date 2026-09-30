@@ -1,0 +1,446 @@
+<!doctype html>
+<!--
+  feature.html — visual explainer template (Institute-style feature), shown in Simplified Chinese.
+
+  Structure: split hero → drop-cap introduction → sticky scrollytelling → explorer
+  → findings with charts → closing statement → method note → footnotes.
+
+  How to use
+  1. Keep editorial.css next to this file (or inline it). Set <html lang>; "en" works too.
+  2. Replace every piece of sample content. The toy model below (MODEL in the script) is an
+     illustration: swap in the user's own model or data, or turn the explorer into a static
+     comparison. Elements marked data-sample hold placeholder numbers — rewrite or delete them,
+     then remove the attribute. Never publish template numbers as findings.
+  3. The page reads fine without JavaScript or with reduced motion: the scrollytelling collapses
+     into a static figure plus ordinary cards, and the explorer shows its default state.
+  4. Page-specific components (the Gantt chart, stacked bars, stats) live in the <style> block
+     below and reuse the --ed-* tokens. Build new explainer graphics the same way.
+-->
+<html lang="zh-CN" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 能让一个研究项目快多少？— 田野笔记</title>
+  <meta name="description" content="用一个可以动手调节的小模型，解释为什么 AI 让单个环节快了好几倍，整个研究项目却没有快那么多。">
+  <meta property="og:title" content="AI 能让一个研究项目快多少？">
+  <meta property="og:type" content="article">
+  <meta name="theme-color" content="#faf9f5">
+  <script>document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
+  <!-- Latin faces plus Noto Serif SC for Chinese body text. Google Fonts slices CJK by unicode-range,
+       so readers only download the glyphs on the page. Self-host or use a mirror where Google is blocked. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Schibsted+Grotesk:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600&display=swap">
+  <link rel="stylesheet" href="editorial.css">
+  <style>
+    /* ---- Page-specific components, built on the --ed-* tokens ---- */
+
+    /* Gantt chart: one row per stage, bars positioned in weeks (0–24). */
+    .gantt { --label: 104px; --weeks: 24; width: 100%; max-width: 860px; font: 400 13px/1.3 var(--ed-sans); color: var(--ed-muted); }
+    .gantt__plot { position: relative; }
+    .gantt__overlay { position: absolute; top: 0; bottom: 0; left: calc(var(--label) + 16px); right: 0; pointer-events: none; }
+    .gantt__overlay::before {   /* pencil gridlines every two weeks */
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(to right, color-mix(in srgb, var(--ed-ink) 9%, transparent) 1px, transparent 1px) 0 0 / calc(200% / var(--weeks)) 100%;
+    }
+    .gantt__row { position: relative; display: grid; grid-template-columns: var(--label) minmax(0, 1fr); column-gap: 16px; align-items: center; height: 38px; }
+    .gantt__label { text-align: right; line-height: 1.2; transition: color .4s var(--ed-ease); }
+    .gantt__lane { position: relative; height: 100%; }
+    .gantt__ghost, .gantt__bar { position: absolute; top: 7px; bottom: 7px; left: calc(var(--s) / var(--weeks) * 100%); width: calc(var(--d) / var(--weeks) * 100%); border-radius: 3px; }
+    .gantt__ghost { left: calc(var(--bs) / var(--weeks) * 100%); width: calc(var(--bd) / var(--weeks) * 100%); border: 1px dashed color-mix(in srgb, var(--ed-ink) 32%, transparent); background: color-mix(in srgb, var(--ed-stone) 14%, transparent); transition: opacity .5s var(--ed-ease); }
+    .gantt__bar { background: var(--c, var(--ed-stone)); filter: url(#tex-crayon); transition: left .8s var(--ed-ease), width .8s var(--ed-ease), background-color .5s var(--ed-ease), opacity .5s var(--ed-ease); }
+    .gantt__row[data-kind="ai"]   { --c: var(--ed-lavender); }
+    .gantt__row[data-kind="hard"] { --c: var(--ed-stone); }
+    .gantt__row[data-kind="new"]  { --c: var(--ed-amber); }
+    .gantt__tag { position: absolute; top: 50%; transform: translateY(-50%); left: calc((var(--s) + var(--d)) / var(--weeks) * 100% + 8px); font-size: 11px; color: var(--ed-ink); white-space: nowrap; opacity: 0; transition: opacity .4s var(--ed-ease), left .8s var(--ed-ease); }
+    .gantt__end { position: absolute; top: -10px; bottom: 0; border-left: 1px solid var(--ed-ink); transition: left .8s var(--ed-ease), opacity .4s var(--ed-ease); }
+    .gantt__end--base { left: 100%; border-left-style: dashed; border-left-color: color-mix(in srgb, var(--ed-ink) 45%, transparent); }
+    .gantt__end--now { left: calc(var(--total) / var(--weeks) * 100%); }
+    .gantt__end span { position: absolute; bottom: 100%; transform: translate(-50%, -2px); white-space: nowrap; font-size: 11px; color: var(--ed-muted); background: var(--ed-paper); padding: 0 4px; }
+    .gantt__end--now span { color: var(--ed-ink); font-weight: 600; }
+    .gantt__end--base { top: -30px; }
+    .gantt__end--base span { transform: translate(-100%, -2px); padding-right: 0; }   /* sits one line above the "now" label and inside the plot */
+    .gantt__axis { display: grid; grid-template-columns: var(--label) minmax(0, 1fr); column-gap: 16px; height: 22px; margin-top: 4px; }
+    .gantt__ticks { position: relative; font-size: 11px; color: var(--ed-subtle); }
+    .gantt__ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+    .gantt__ticks span:last-child { transform: translateX(-100%); }
+    .gantt__result { margin: 14px 0 0 calc(var(--label) + 16px); font: 400 var(--ed-fs-small)/1.5 var(--ed-sans); color: var(--ed-muted); min-height: 1.5em; }
+    .gantt__result b { font: 400 22px/1 var(--ed-serif); color: var(--ed-ink); margin-right: 6px; }
+    /* Scroll states set data-state on the chart. */
+    .gantt[data-state="1"] .gantt__row { --c: var(--ed-stone); }
+    .gantt:is([data-state="1"]) .gantt__ghost { opacity: 0; }
+    .gantt:is([data-state="1"], [data-state="2"], [data-state="3"]) .gantt__row[data-kind="new"] .gantt__label { color: var(--ed-line); }
+    .gantt[data-state="3"] .gantt__row[data-kind="ai"] .gantt__bar { opacity: .35; }
+    .gantt[data-state="3"] .gantt__row[data-kind="hard"] .gantt__label { color: var(--ed-ink); }
+    .gantt[data-state="3"] .gantt__row[data-kind="hard"] .gantt__tag { opacity: 1; }
+    .gantt[data-state="4"] .gantt__row[data-kind="new"] .gantt__label { color: var(--ed-ink); }
+    .gantt:is([data-state="1"]) .gantt__end--now { opacity: 0; }
+    .gantt:not([data-state="5"]) .gantt__result { visibility: hidden; }
+    .gantt[data-state="explore"] .gantt__result { display: none; }
+
+    /* Scrollytelling layout for this chart: graphic to the right of the cards on wide screens. */
+    .story .ed-scrolly__stage { padding: 0 var(--ed-margin); }
+    .story .ed-scrolly__stage::before {   /* faint pencil-grid paper that fades out at the edges */
+      content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background-image: linear-gradient(to right, color-mix(in srgb, var(--ed-ink) 6%, transparent) 1px, transparent 1px), linear-gradient(to bottom, color-mix(in srgb, var(--ed-ink) 6%, transparent) 1px, transparent 1px);
+      background-size: 28px 28px;
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 62% 50%, #000 30%, transparent 75%); mask-image: radial-gradient(ellipse 70% 60% at 62% 50%, #000 30%, transparent 75%);
+    }
+    .story .ed-scrolly__stage { isolation: isolate; }
+    @media (min-width: 1100px) {
+      .story .ed-scrolly__stage { justify-items: end; padding-left: calc(var(--ed-margin) + 416px + 48px); }
+    }
+    @media (max-width: 1099px) {
+      .story .ed-scrolly__stage { place-items: start center; padding-top: 9svh; }
+      .story .ed-step { align-items: flex-end; padding-bottom: 5svh; }
+      .story .ed-step__card { width: 100%; max-width: 560px; margin-inline: auto; }
+    }
+    @media (max-width: 560px) {
+      .gantt { --label: 70px; font-size: 12px; }
+      .gantt__row { height: 34px; column-gap: 10px; }
+      .gantt__axis { column-gap: 10px; }
+      .gantt__overlay { left: calc(var(--label) + 10px); }
+      .gantt__result { margin-left: 0; }
+    }
+
+    /* Explorer. Without JavaScript the controls are hidden and the story chart shows the default result. */
+    .no-js .explorer__controls, .no-js #explorer-chart { display: none; }
+    .explorer { margin-block: 32px 16px; padding: clamp(20px, 3vw, 36px) 0; }
+    .explorer .gantt { margin: 48px auto 0; }   /* room for the end-marker labels above the plot */
+    .explorer__controls { display: grid; justify-items: center; gap: 16px; margin-bottom: 28px; }
+    .explorer__range { width: min(360px, 100%); }
+    .explorer__range label { display: flex; justify-content: space-between; }
+    .explorer__range output { color: var(--ed-ink); font-weight: 600; }
+
+    /* 100% stacked bars for composition. */
+    .stack { display: grid; gap: 10px; font: 400 var(--ed-fs-small)/1.3 var(--ed-sans); }
+    .stack__row { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; column-gap: 16px; }
+    .stack__label { color: var(--ed-ink); font-family: var(--ed-serif); font-size: 16px; }
+    .stack__bar { display: flex; height: 30px; border-radius: 3px; overflow: hidden; }
+    .stack__seg { position: relative; isolation: isolate; flex: 0 0 calc(var(--v) * 1%); display: flex; align-items: center; padding-left: 8px; color: var(--ed-ink); font-size: 11.5px; white-space: nowrap; overflow: hidden; }
+    .stack__seg::before { content: ""; position: absolute; inset: 0; z-index: -1; background: var(--c); filter: url(#tex-crayon); }   /* texture on the fill, not on the text */
+    .stack__seg + .stack__seg { border-left: 2px solid var(--ed-paper); }
+
+    /* Big-number stats. */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0; margin-block: 32px; border-top: 1px solid var(--ed-line); }
+    .stat { margin: 0; padding: 18px 16px 4px 0; }
+    .stat__num { display: block; font: 400 34px/1.1 var(--ed-serif); color: var(--ed-ink); }
+    .stat__num small { font-size: 17px; margin-left: 2px; }
+    .stat__label { display: block; margin-top: 6px; font: 400 var(--ed-fs-small)/1.45 var(--ed-sans); color: var(--ed-muted); }
+  </style>
+</head>
+<body class="editorial">
+  <a class="ed-skip" href="#main">跳到正文</a>
+
+  <!-- Shared SVG filters: crayon grain for fills, pencil grain for thin lines. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="tex-crayon" x="-5%" y="-40%" width="110%" height="180%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9 0.22" numOctaves="3" seed="3" result="grain"/>
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.3 1.45" result="holes"/>
+        <feComposite in="SourceGraphic" in2="holes" operator="in" result="speckled"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="1" seed="9" result="warp"/>
+        <feDisplacementMap in="speckled" in2="warp" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="tex-pencil" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="1" seed="5" result="grain"/>
+        <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.4 1.25" result="holes"/>
+        <feComposite in="SourceGraphic" in2="holes" operator="in" result="speckled"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="1" seed="2" result="warp"/>
+        <feDisplacementMap in="speckled" in2="warp" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <header class="ed-bar">
+    <a class="ed-bar__brand" href="#">田野笔记</a>
+    <nav class="ed-bar__nav" aria-label="站点">
+      <a href="#">研究</a>
+      <a href="#">专题</a>
+      <a href="#">关于</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <article>
+      <!-- ▼ SPLIT HERO: the art is a metaphor for the argument (here: a plan that compresses unevenly). -->
+      <header class="ed-header--split">
+        <div class="ed-header--split__art">
+          <svg viewBox="0 0 1000 860" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+          <g fill="none" stroke="#87867f" stroke-width="1.1" filter="url(#tex-pencil)"><path d="M16.0 99 V739" stroke-opacity="0.17"/><path d="M33.0 119 V734" stroke-opacity="0.09"/><path d="M50.0 112 V752" stroke-opacity="0.09"/><path d="M67.0 83 V760" stroke-opacity="0.10"/><path d="M84.0 82 V756" stroke-opacity="0.22"/><path d="M101.0 84 V735" stroke-opacity="0.11"/><path d="M118.0 105 V780" stroke-opacity="0.12"/><path d="M135.0 87 V743" stroke-opacity="0.12"/><path d="M152.0 118 V787" stroke-opacity="0.26"/><path d="M169.0 115 V754" stroke-opacity="0.13"/><path d="M186.0 139 V733" stroke-opacity="0.13"/><path d="M203.0 132 V747" stroke-opacity="0.14"/><path d="M220.0 89 V737" stroke-opacity="0.30"/><path d="M237.0 99 V779" stroke-opacity="0.15"/><path d="M254.0 91 V765" stroke-opacity="0.15"/><path d="M271.0 118 V752" stroke-opacity="0.16"/><path d="M288.0 113 V734" stroke-opacity="0.34"/><path d="M305.0 84 V742" stroke-opacity="0.16"/><path d="M322.0 121 V756" stroke-opacity="0.17"/><path d="M339.0 99 V765" stroke-opacity="0.17"/><path d="M356.0 107 V748" stroke-opacity="0.37"/><path d="M373.0 128 V772" stroke-opacity="0.18"/><path d="M390.0 95 V764" stroke-opacity="0.18"/><path d="M407.0 112 V783" stroke-opacity="0.19"/><path d="M424.0 124 V747" stroke-opacity="0.40"/><path d="M441.0 139 V737" stroke-opacity="0.19"/><path d="M458.0 105 V775" stroke-opacity="0.20"/><path d="M475.0 89 V759" stroke-opacity="0.20"/><path d="M492.0 82 V770" stroke-opacity="0.41"/><path d="M509.0 126 V764" stroke-opacity="0.19"/><path d="M526.0 133 V749" stroke-opacity="0.19"/><path d="M543.0 122 V766" stroke-opacity="0.18"/><path d="M560.0 115 V757" stroke-opacity="0.38"/><path d="M577.0 130 V787" stroke-opacity="0.18"/><path d="M594.0 108 V770" stroke-opacity="0.17"/><path d="M611.0 84 V772" stroke-opacity="0.17"/><path d="M628.0 119 V790" stroke-opacity="0.35"/><path d="M645.0 129 V747" stroke-opacity="0.16"/><path d="M5 120.0 H943" stroke-opacity="0.13"/><path d="M-9 146.0 H927" stroke-opacity="0.07"/><path d="M-3 172.0 H899" stroke-opacity="0.18"/><path d="M-8 198.0 H951" stroke-opacity="0.10"/><path d="M-5 224.0 H910" stroke-opacity="0.23"/><path d="M6 250.0 H960" stroke-opacity="0.12"/><path d="M-7 276.0 H926" stroke-opacity="0.27"/><path d="M12 302.0 H961" stroke-opacity="0.14"/><path d="M23 328.0 H959" stroke-opacity="0.31"/><path d="M1 354.0 H923" stroke-opacity="0.15"/><path d="M4 380.0 H961" stroke-opacity="0.34"/><path d="M28 406.0 H902" stroke-opacity="0.17"/><path d="M-3 432.0 H909" stroke-opacity="0.38"/><path d="M-1 458.0 H929" stroke-opacity="0.17"/><path d="M14 484.0 H911" stroke-opacity="0.35"/><path d="M-10 510.0 H924" stroke-opacity="0.16"/><path d="M5 536.0 H935" stroke-opacity="0.32"/><path d="M28 562.0 H945" stroke-opacity="0.14"/><path d="M11 588.0 H939" stroke-opacity="0.28"/><path d="M17 614.0 H894" stroke-opacity="0.12"/><path d="M26 640.0 H952" stroke-opacity="0.24"/><path d="M25 666.0 H954" stroke-opacity="0.10"/><path d="M6 692.0 H922" stroke-opacity="0.20"/><path d="M-6 718.0 H941" stroke-opacity="0.08"/><path d="M-8 744.0 H895" stroke-opacity="0.14"/><path d="M-2 770.0 H903" stroke-opacity="0.05"/></g>
+          <g fill="#bdbaae" fill-opacity=".16" stroke="#87867f" stroke-opacity=".55" stroke-width="1.3" stroke-dasharray="5 5"><rect x="84.0" y="222" width="102.0" height="44" rx="3"/><rect x="186.0" y="284" width="68.0" height="44" rx="3"/><rect x="254.0" y="346" width="204.0" height="44" rx="3"/><rect x="458.0" y="408" width="102.0" height="44" rx="3"/><rect x="560.0" y="470" width="136.0" height="44" rx="3"/><rect x="696.0" y="594" width="204.0" height="44" rx="3"/></g>
+          <g fill="none" stroke-width="11" stroke-linecap="round" filter="url(#tex-crayon)"><g stroke="#918bd6"><path d="M87.7 227.2 L106.0 226.3"/><path d="M88.8 235.0 L105.9 235.9"/><path d="M88.0 244.2 L105.1 243.9"/><path d="M87.9 252.0 L103.0 253.2"/><path d="M89.2 260.4 L105.7 259.5"/></g><g stroke="#bdbaae"><path d="M113.9 289.2 L148.3 288.4"/><path d="M116.3 296.8 L149.4 295.9"/><path d="M113.1 306.1 L149.4 307.2"/><path d="M115.4 315.0 L150.3 314.7"/><path d="M115.7 321.8 L149.4 322.5"/></g><g stroke="#bdbaae"><path d="M159.0 351.2 L333.7 352.3"/><path d="M161.0 360.5 L333.7 361.0"/><path d="M160.0 367.5 L335.3 366.3"/><path d="M159.2 375.3 L335.6 375.8"/><path d="M159.8 385.4 L333.2 386.6"/></g><g stroke="#918bd6"><path d="M344.8 414.4 L369.7 413.8"/><path d="M344.2 421.1 L368.3 422.1"/><path d="M345.2 430.7 L368.2 431.4"/><path d="M345.8 437.4 L367.3 438.1"/><path d="M345.2 447.0 L369.9 447.7"/></g><g stroke="#918bd6"><path d="M380.3 475.2 L421.5 474.9"/><path d="M380.8 483.6 L422.4 482.8"/><path d="M378.0 491.3 L421.8 492.0"/><path d="M380.4 499.5 L421.5 499.9"/><path d="M379.4 508.2 L424.5 507.0"/></g><g stroke="#f0ac54"><path d="M434.2 538.4 L457.1 539.5"/><path d="M435.0 545.6 L456.0 544.9"/><path d="M432.9 553.5 L458.1 553.7"/><path d="M433.4 561.8 L458.5 562.8"/><path d="M433.5 570.2 L456.9 571.2"/></g><g stroke="#bdbaae"><path d="M469.1 599.3 L661.2 599.4"/><path d="M466.0 607.8 L661.4 607.0"/><path d="M468.7 615.0 L662.3 614.9"/><path d="M467.9 624.7 L661.8 624.7"/><path d="M468.7 632.6 L662.5 632.8"/></g></g>
+          <g stroke="#141413" stroke-width="1.4" filter="url(#tex-pencil)" fill="none"><path d="M900.0 200 V666" stroke-dasharray="3 6" stroke-opacity=".55"/><path d="M666.4 214 V666" stroke-opacity=".8"/><path d="M892.0 226 H676.4" stroke="#d97757" stroke-width="2.4" stroke-linecap="round"/><path d="M684.4 219 L674.4 226 L684.4 233" stroke="#d97757" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+          </svg>
+        </div>
+        <div class="ed-header--split__text">
+          <h1 class="ed-title-serif">AI 能让一个<wbr>研究项目<wbr>快多少？</h1>
+          <p class="ed-standfirst">如果 AI 能把读文献、写代码、写论文都变快好几倍，一个研究项目是否也会快好几倍？通常不会。</p>
+          <p class="ed-standfirst">我们用一个可以动手调节的小模型解释原因：项目由一串环节组成，总时长取决于最难加速的那几个。你可以改变对 AI 能力的假设，看看结论会不会变。</p>
+          <div class="ed-actions">
+            <a class="ed-btn" href="#model">模型说明
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 11 11 5M6 5h5v5"/></svg></a>
+            <a class="ed-btn" href="#explorer">跳到探索器
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 3v10M4 9l4 4 4-4"/></svg></a>
+          </div>
+        </div>
+        <a class="ed-btn ed-scroll-hint" href="#intro">往下读
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 3v10M4 9l4 4 4-4"/></svg></a>
+      </header>
+      <!-- ▲ SPLIT HERO -->
+
+      <div class="ed-body" id="intro">
+        <div class="ed-section-gap" aria-hidden="true"></div>
+        <p class="ed-dropcap">过去一年，很多研究者都有过类似的体验：让 AI 梳理一个陌生领域，半小时就能得到过去要读一周才拼得出的全景；一段数据清洗代码，从写到跑通只要几分钟。单看这些环节，快五倍、十倍并不夸张。</p>
+        <p>可如果问同一批人，整个项目提前了多少，回答往往保守得多。一篇论文从立项到发表，仍然要等实验跑完、等合作者回复、等审稿意见。省下来的时间是真实的，但有一大半被其他环节吞掉了。</p>
+        <p>这种落差并不神秘。计算机体系结构里有一条老规律，叫阿姆达尔定律：一项工作整体能快多少，受限于其中无法加速的部分。<sup class="ed-fn-ref" id="fnref-1"><a href="#fn-1" aria-label="脚注 1">1</a></sup>下面我们把一个虚构但典型的研究项目拆开，一步步看这条规律怎样起作用。</p>
+
+        <!-- ▼ SCROLLYTELLING: sticky chart + step cards. Each step sets data-state on the chart. -->
+        <section class="ed-full ed-scrolly story" aria-label="一个研究项目的时间线，分五步讲解" data-sample>
+          <div class="ed-progress" aria-hidden="true"><div class="ed-progress__fill"></div></div>
+          <div class="ed-scrolly__stage">
+            <figure class="gantt" id="story-chart" data-state="5" style="--total: 17.138" aria-label="项目时间线：七个环节依次进行，单位为周">
+              <div class="gantt__plot">
+                <div class="gantt__overlay" aria-hidden="true">
+                  <span class="gantt__end gantt__end--base"><span>原计划 24 周</span></span>
+                  <span class="gantt__end gantt__end--now"><span data-total-label>17.1 周</span></span>
+                </div>
+                <div class="gantt__row" data-id="lit" data-kind="ai"><span class="gantt__label">查文献</span><span class="gantt__lane"><span class="gantt__ghost" style="--bs:0;--bd:3"></span><span class="gantt__bar" style="--s:0;--d:0.75"></span></span></div>
+                <div class="gantt__row" data-id="design" data-kind="hard"><span class="gantt__label">设计实验</span><span class="gantt__lane"><span class="gantt__ghost" style="--bs:3;--bd:2"></span><span class="gantt__bar" style="--s:0.75;--d:1.333"></span></span></div>
+                <div class="gantt__row" data-id="run" data-kind="hard"><span class="gantt__label">跑实验</span><span class="gantt__lane"><span class="gantt__ghost" style="--bs:5;--bd:6"></span><span class="gantt__bar" style="--s:2.083;--d:5.455"></span><span class="gantt__tag" style="--s:2.083;--d:5.455">瓶颈</span></span></div>
+                <div class="gantt__row" data-id="analyse" data-kind="ai"><span class="gantt__label">分析数据</span><span class="gantt__lane"><span class="gantt__ghost" style="--bs:11;--bd:3"></span><span class="gantt__bar" style="--s:7.538;--d:1"></span></span></div>
+                <div class="gantt__row" data-id="write" data-kind="ai"><span class="gantt__label">写论文</span><span class="gantt__lane"><span class="gantt__ghost" style="--bs:14;--bd:4"></span><span class="gantt__bar" style="--s:8.538;--d:1.6"></span></span></div>
+                <div class="gantt__row" data-id="verify" data-kind="new"><span class="gantt__label">核对 AI 产出</span><span class="gantt__lane"><span class="gantt__bar" style="--s:10.138;--d:1"></span></span></div>
+                <div class="gantt__row" data-id="review" data-kind="hard"><span class="gantt__label">评审与修改</span><span class="gantt__lane"><span class="gantt__ghost" style="--bs:18;--bd:6"></span><span class="gantt__bar" style="--s:11.138;--d:6"></span><span class="gantt__tag" style="--s:11.138;--d:6">瓶颈</span></span></div>
+              </div>
+              <div class="gantt__axis" aria-hidden="true"><span></span><span class="gantt__ticks"><span style="left:0;transform:none">0</span><span style="left:16.667%">4</span><span style="left:33.333%">8</span><span style="left:50%">12</span><span style="left:66.667%">16</span><span style="left:83.333%">20</span><span style="left:100%">24 周</span></span></div>
+              <p class="gantt__result" data-result><b>1.4×</b>项目从 24 周缩短到 17.1 周</p>
+            </figure>
+          </div>
+          <div class="ed-scrolly__steps">
+            <div class="ed-step" data-step="1"><div class="ed-step__card">
+              <p class="ed-step__lead">一个项目，是一串环节</p>
+              <p>设想一个为期 24 周的实证研究：查文献 3 周、设计实验 2 周、跑实验 6 周、分析数据 3 周、写论文 4 周，最后是 6 周的评审与修改。每个环节都要等上一个环节完成。</p>
+              <p class="ed-step__note">环节和周数均为示意，用来说明机制，不是统计数据。</p>
+            </div></div>
+            <div class="ed-step" data-step="2"><div class="ed-step__card">
+              <p class="ed-step__lead">AI 擅长的环节会明显缩短</p>
+              <p>检索和整理文献、写分析代码、起草和润色文字，是今天的 AI 最能帮上忙的工作。在「中等」假设下，这三个环节分别快了 4 倍、3 倍和 2.5 倍。</p>
+            </div></div>
+            <div class="ed-step" data-step="3"><div class="ed-step__card">
+              <p class="ed-step__lead">另一些环节几乎不动</p>
+              <p>实验要等仪器、样本和算力，评审要等同行和期刊。它们受物理过程和制度节奏约束，AI 很难改变。这些环节原本就占了一半以上的时间。</p>
+            </div></div>
+            <div class="ed-step" data-step="4"><div class="ed-step__card">
+              <p class="ed-step__lead">还会冒出新的工作</p>
+              <p>AI 写的代码需要有人读，AI 找的引用需要有人核对。在这个模型里，核对 AI 的产出额外需要 1 周。这项工作不难，却不能省略。</p>
+            </div></div>
+            <div class="ed-step" data-step="5"><div class="ed-step__card">
+              <p class="ed-step__lead">结果：更快了，但没有想象中那么快</p>
+              <p>项目从 24 周缩短到约 17 周，整体快了 1.4 倍。三个环节平均提速三倍以上，项目却只快了四成，因为剩下的时间大多落在难以加速的环节上。</p>
+            </div></div>
+          </div>
+        </section>
+        <!-- ▲ SCROLLYTELLING -->
+
+        <!-- ▼ EXPLORER: one question, a few controls, a result in words (aria-live) as well as in the chart. -->
+        <h2 class="ed-section-title" id="explorer">换一组假设，结果会怎样？</h2>
+        <p>下面的探索器用同一个模型计算总时长。先选择 AI 能力的情景，再拖动滑块：如果评审流程也能提速，项目会快多少？</p>
+        <section class="ed-wide explorer" aria-label="情景探索器" data-sample>
+          <p class="ed-chart-label">项目时间线（周）</p>
+          <div class="explorer__controls">
+            <div class="ed-segmented" role="group" aria-label="AI 能力情景">
+              <button type="button" class="ed-btn" data-scenario="conservative" aria-pressed="false">保守</button>
+              <button type="button" class="ed-btn" data-scenario="medium" aria-pressed="true">中等</button>
+              <button type="button" class="ed-btn" data-scenario="aggressive" aria-pressed="false">激进</button>
+            </div>
+            <div class="ed-range explorer__range">
+              <label for="review-boost"><span>评审与修改提速</span><output for="review-boost" data-boost-label>1.0×</output></label>
+              <input id="review-boost" type="range" min="1" max="3" step="0.1" value="1">
+            </div>
+          </div>
+          <figure class="gantt" id="explorer-chart" data-state="explore" style="--total: 17.138" aria-hidden="true"></figure>
+          <p class="ed-output" aria-live="polite" data-explorer-text>在「中等」情景下，项目从 24 周缩短到 <strong>17.1 周</strong>，快了 1.40 倍。实验与评审占剩余时间的 67%。</p>
+          <ul class="ed-legend">
+            <li><span class="ed-swatch" style="--c: var(--ed-lavender)"></span>AI 能明显加速</li>
+            <li><span class="ed-swatch" style="--c: var(--ed-stone)"></span>难以加速</li>
+            <li><span class="ed-swatch" style="--c: var(--ed-amber)"></span>新增：核对 AI 产出</li>
+            <li><span class="ed-swatch" style="--c: transparent; border: 1px dashed var(--ed-subtle)"></span>原计划</li>
+          </ul>
+        </section>
+        <!-- ▲ EXPLORER -->
+
+        <h2 class="ed-section-title">三种情景，三个发现</h2>
+
+        <!-- ▼ FINDING: grey kicker + claim in one heading, then evidence. -->
+        <h3 class="ed-finding"><span class="ed-finding__kicker">发现一：总时长</span>最快的环节，决定不了项目有多快。</h3>
+        <p>即使在「激进」情景里，查文献快了 10 倍、分析数据快了 8 倍，整个项目也只从 24 周缩短到 13.6 周，还不到两倍。原因很简单：这些环节原本只占四成时间。把四成时间压缩到接近零，剩下的六成依然在那里。</p>
+        <figure class="ed-media" data-sample>
+          <p class="ed-chart-label">项目总时长，按情景（周）</p>
+          <div class="ed-bars" style="--label: 96px">
+            <div class="ed-bars__row" style="--v:100;--c:var(--ed-stone)"><span class="ed-bars__label">全部照旧</span><span class="ed-bars__track"><span class="ed-bars__fill"></span><span class="ed-bars__value">24 周</span></span></div>
+            <div class="ed-bars__row" style="--v:84.7;--c:var(--ed-lavender-2)"><span class="ed-bars__label">保守</span><span class="ed-bars__track"><span class="ed-bars__fill"></span><span class="ed-bars__value">20.3 周</span></span></div>
+            <div class="ed-bars__row is-key" style="--v:71.4;--c:var(--ed-lavender)"><span class="ed-bars__label">中等</span><span class="ed-bars__track"><span class="ed-bars__fill"></span><span class="ed-bars__value">17.1 周</span></span></div>
+            <div class="ed-bars__row" style="--v:56.6;--c:var(--ed-lavender-2)"><span class="ed-bars__label">激进</span><span class="ed-bars__track"><span class="ed-bars__fill"></span><span class="ed-bars__value">13.6 周</span></span></div>
+            <div class="ed-bars__axis" aria-hidden="true"><span></span><span class="ed-bars__ticks"><span style="left:0">0</span><span style="left:25%">6</span><span style="left:50%">12</span><span style="left:75%">18</span><span style="left:100%">24</span></span></div>
+          </div>
+          <p class="ed-chart-caption">三种情景都假设评审流程不提速。数值由文末的玩具模型算出，只用于说明机制。</p>
+        </figure>
+
+        <h3 class="ed-finding"><span class="ed-finding__kicker">发现二：瓶颈</span>AI 越强，剩下的时间越集中在实验和评审上。</h3>
+        <p>在基线里，难以加速的环节占 58% 的时间；到了「激进」情景，这个比例升到 78%。项目的节奏越来越取决于实验平台和评审机制，而不是研究者手头的工具。</p>
+        <figure class="ed-media" data-sample>
+          <p class="ed-chart-label">剩余时间的构成（占总时长的百分比）</p>
+          <div class="stack">
+            <div class="stack__row"><span class="stack__label">基线</span><span class="stack__bar"><span class="stack__seg" style="--v:41.7;--c:var(--ed-lavender-2)">42%</span><span class="stack__seg" style="--v:58.3;--c:var(--ed-stone)">58%</span></span></div>
+            <div class="stack__row"><span class="stack__label">保守</span><span class="stack__bar"><span class="stack__seg" style="--v:30.3;--c:var(--ed-lavender-2)">30%</span><span class="stack__seg" style="--v:67.2;--c:var(--ed-stone)">67%</span><span class="stack__seg" style="--v:2.5;--c:var(--ed-amber)"></span></span></div>
+            <div class="stack__row"><span class="stack__label">中等</span><span class="stack__bar"><span class="stack__seg" style="--v:19.5;--c:var(--ed-lavender-2)">20%</span><span class="stack__seg" style="--v:74.6;--c:var(--ed-stone)">75%</span><span class="stack__seg" style="--v:5.8;--c:var(--ed-amber)"></span></span></div>
+            <div class="stack__row"><span class="stack__label">激进</span><span class="stack__bar"><span class="stack__seg" style="--v:10.9;--c:var(--ed-lavender-2)">11%</span><span class="stack__seg" style="--v:78.1;--c:var(--ed-stone)">78%</span><span class="stack__seg" style="--v:11;--c:var(--ed-amber)">11%</span></span></div>
+          </div>
+          <ul class="ed-legend">
+            <li><span class="ed-swatch" style="--c: var(--ed-lavender-2)"></span>AI 能明显加速</li>
+            <li><span class="ed-swatch" style="--c: var(--ed-stone)"></span>难以加速</li>
+            <li><span class="ed-swatch" style="--c: var(--ed-amber)"></span>新增：核对 AI 产出</li>
+          </ul>
+        </figure>
+
+        <h3 class="ed-finding"><span class="ed-finding__kicker">发现三：新工作</span>省下的时间里，有一部分要花在核对上。</h3>
+        <p>核对的工作量随 AI 承担的份额一起增长。在「激进」情景中，它占到总时长的 11%，接近「分析数据」在原计划里的比重（13%）。这部分时间很少出现在“AI 提速多少倍”的讨论里，却实实在在地落在研究者身上。</p>
+        <div class="stats" data-sample>
+          <p class="stat"><span class="stat__num">0.5<small>周</small></span><span class="stat__label">保守情景 · 占总时长 2%</span></p>
+          <p class="stat"><span class="stat__num">1<small>周</small></span><span class="stat__label">中等情景 · 占总时长 6%</span></p>
+          <p class="stat"><span class="stat__num">1.5<small>周</small></span><span class="stat__label">激进情景 · 占总时长 11%</span></p>
+        </div>
+        <!-- ▲ FINDINGS -->
+
+        <p class="ed-statement">加速一个环节，不等于加速整件事。</p>
+        <p>这并不说明 AI 对科研的帮助被高估了。它说明收益会首先出现在个人的工作台上，而项目的节奏取决于那些需要等待、协调和信任的环节。</p>
+        <p>如果目标是让研究整体更快，值得投入的也许不是更快的写作工具，而是更快的实验平台、更透明的数据共享，以及更高效的评审。反过来，如果这些环节保持不变，AI 带来的最大变化可能不是项目更快，而是同样的时间里能多做几次尝试。</p>
+
+        <!-- ▼ METHOD NOTE: kicker + heading, then plain prose. State the model's limits plainly. -->
+        <h3 class="ed-finding" id="model"><span class="ed-finding__kicker">模型说明</span>这是一个用来思考的玩具模型，不是预测。</h3>
+        <p>项目被简化为七个依次进行的环节。每个环节的耗时除以一个固定的提速倍数；「核对 AI 产出」作为新增环节直接计入总时长，即 T = Σ tᵢ / sᵢ + v。三种情景的倍数写在页面脚本的 <code>MODEL</code> 对象里，可以直接修改。</p>
+        <p>模型忽略了很多现实因素：环节之间可以并行，AI 可能改变研究的质量而不只是速度，项目的数量和选题也会随工具变化。所有周数和倍数都只是示意，换成你自己的项目数据，结论可能不同。</p>
+        <p class="ed-ack">把这一节换成你的方法说明、数据来源和致谢。</p>
+
+        <section class="ed-footnotes" aria-label="脚注">
+          <p class="ed-footnotes__label">脚注</p>
+          <ol>
+            <li id="fn-1">阿姆达尔定律（Amdahl’s law）：若一项工作中比例为 p 的部分提速 s 倍，整体提速为 <span style="white-space:nowrap">1 / ((1 − p) + p / s)</span>。当 s 趋于无穷，整体提速的上限是 <span style="white-space:nowrap">1 / (1 − p)</span>。<a class="ed-backref" href="#fnref-1" aria-label="返回正文">↩</a></li>
+          </ol>
+        </section>
+      </div>
+    </article>
+  </main>
+
+  <footer class="ed-body" style="padding-bottom:48px">
+    <hr style="margin-block:0 24px">
+    <p class="ed-note">© 2026 你的名字 · <a href="#">订阅</a> · <a href="#">GitHub</a></p>
+  </footer>
+
+  <script>
+  (() => {
+    // ---- The toy model. Replace with the real model or data behind your piece. ----
+    const MODEL = {
+      weeks: 24,
+      stages: [
+        { id: 'lit',     label: '查文献',       weeks: 3, kind: 'ai' },
+        { id: 'design',  label: '设计实验',     weeks: 2, kind: 'hard' },
+        { id: 'run',     label: '跑实验',       weeks: 6, kind: 'hard' },
+        { id: 'analyse', label: '分析数据',     weeks: 3, kind: 'ai' },
+        { id: 'write',   label: '写论文',       weeks: 4, kind: 'ai' },
+        { id: 'verify',  label: '核对 AI 产出', weeks: 0, kind: 'new' },
+        { id: 'review',  label: '评审与修改',   weeks: 6, kind: 'hard' },
+      ],
+      scenarios: {
+        conservative: { label: '保守', verify: 0.5, speed: { lit: 2,  design: 1.2, run: 1,   analyse: 1.5, write: 1.5, review: 1 } },
+        medium:       { label: '中等', verify: 1,   speed: { lit: 4,  design: 1.5, run: 1.1, analyse: 3,   write: 2.5, review: 1 } },
+        aggressive:   { label: '激进', verify: 1.5, speed: { lit: 10, design: 2,   run: 1.3, analyse: 8,   write: 5,   review: 1.2 } },
+      },
+    };
+
+    // Durations for a scenario; `only` limits which kinds are accelerated (used by the story steps).
+    function durations(name, { reviewBoost = 1, only = null, verify = true } = {}) {
+      const sc = MODEL.scenarios[name];
+      const out = {};
+      for (const st of MODEL.stages) {
+        if (st.kind === 'new') { out[st.id] = verify ? sc.verify : 0; continue; }
+        const accelerate = !only || only.includes(st.kind);
+        const s = accelerate ? sc.speed[st.id] * (st.id === 'review' ? reviewBoost : 1) : 1;
+        out[st.id] = st.weeks / s;
+      }
+      return out;
+    }
+    const total = d => Object.values(d).reduce((a, b) => a + b, 0);
+    const fmt = (x, n = 1) => (Math.round(x * 10 ** n) / 10 ** n).toFixed(n);
+
+    // Position bars in a .gantt chart for a set of durations.
+    function draw(chart, d) {
+      let s = 0;
+      for (const st of MODEL.stages) {
+        const row = chart.querySelector(`.gantt__row[data-id="${st.id}"]`);
+        if (!row) continue;
+        row.querySelectorAll('.gantt__bar, .gantt__tag').forEach(el => { el.style.setProperty('--s', s); el.style.setProperty('--d', d[st.id]); });
+        s += d[st.id];
+      }
+      chart.style.setProperty('--total', s);
+      const label = chart.querySelector('[data-total-label]');
+      if (label) label.textContent = fmt(s) + ' 周';
+      const result = chart.querySelector('[data-result]');
+      if (result) result.innerHTML = `<b>${fmt(MODEL.weeks / s)}×</b>项目从 ${MODEL.weeks} 周缩短到 ${fmt(s)} 周`;
+      return s;
+    }
+
+    // ---- Explorer: clone the story chart's markup so both stay identical. ----
+    const storyChart = document.getElementById('story-chart');
+    const exChart = document.getElementById('explorer-chart');
+    exChart.innerHTML = storyChart.innerHTML;
+    let scenario = 'medium', boost = 1;
+    const exText = document.querySelector('[data-explorer-text]');
+    function updateExplorer() {
+      const d = durations(scenario, { reviewBoost: boost });
+      const T = draw(exChart, d);
+      const hardShare = (d.run + d.review) / T * 100;
+      exText.innerHTML = `在「${MODEL.scenarios[scenario].label}」情景下，项目从 ${MODEL.weeks} 周缩短到 <strong>${fmt(T)} 周</strong>，快了 ${fmt(MODEL.weeks / T, 2)} 倍。实验与评审占剩余时间的 ${Math.round(hardShare)}%。`;
+    }
+    document.querySelectorAll('[data-scenario]').forEach(btn => btn.addEventListener('click', () => {
+      scenario = btn.dataset.scenario;
+      document.querySelectorAll('[data-scenario]').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      updateExplorer();
+    }));
+    const range = document.getElementById('review-boost');
+    const boostLabel = document.querySelector('[data-boost-label]');
+    range.addEventListener('input', () => { boost = +range.value; boostLabel.textContent = fmt(boost) + '×'; updateExplorer(); });
+    updateExplorer();
+
+    // ---- Scrollytelling. Skipped under reduced motion: the chart then stays in its final state. ----
+    const story = document.querySelector('.story');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!story || reduce || !('IntersectionObserver' in window)) return;
+    story.classList.add('is-live');
+    const states = {
+      1: () => { const d = {}; MODEL.stages.forEach(st => d[st.id] = st.weeks); return d; },
+      2: () => durations('medium', { only: ['ai'], verify: false }),
+      3: () => durations('medium', { verify: false }),
+      4: () => durations('medium'),
+      5: () => durations('medium'),
+    };
+    function setStep(n) { storyChart.dataset.state = n; draw(storyChart, states[n]()); }
+    setStep(1);
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) setStep(+e.target.dataset.step); });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    story.querySelectorAll('.ed-step').forEach(s => io.observe(s));
+
+    // Reading progress through the story section.
+    const fill = story.querySelector('.ed-progress__fill');
+    const onScroll = () => {
+      const r = story.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, -r.top / (r.height - innerHeight)));
+      fill.style.setProperty('--p', p.toFixed(3));
+    };
+    addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  })();
+  </script>
+</body>
+</html>

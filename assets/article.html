@@ -1,0 +1,277 @@
+<!doctype html>
+<!--
+  article.html — research / engineering / news post template.
+
+  How to use
+  1. Copy this file and editorial.css next to each other (or inline the CSS in a <style> tag).
+  2. Set <html lang> ("en", "zh-CN", ...). CSS adapts CJK typography automatically.
+  3. Replace every piece of sample content. Elements carrying data-sample hold placeholder
+     numbers or claims: rewrite them from the user's material or delete them, then delete the
+     data-sample attribute and any .ed-sample-badge. Never publish template numbers.
+  4. Delete blocks you do not need. Each block is fenced by a  ▼ / ▲  comment.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Every answer needs a path back to its source — Field Notes</title>
+  <meta name="description" content="Reading assistants save time only when readers can check them. A study of four ways to attach evidence to answers.">
+  <meta property="og:title" content="Every answer needs a path back to its source">
+  <meta property="og:description" content="Reading assistants save time only when readers can check them.">
+  <meta property="og:type" content="article">
+  <meta name="theme-color" content="#faf9f5">
+  <!-- Open-licensed fonts. Self-host them, or swap the host, if Google Fonts is slow or blocked for your readers. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Schibsted+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="editorial.css">
+</head>
+<body class="editorial">
+  <a class="ed-skip" href="#main">Skip to content</a>
+
+  <!-- ▼ SITE BAR — your own wordmark and links. Never use another organisation's logo. -->
+  <header class="ed-bar">
+    <a class="ed-bar__brand" href="#">Field Notes</a>
+    <nav class="ed-bar__nav" aria-label="Site">
+      <a href="#">Research</a>
+      <a href="#">Engineering</a>
+      <a href="#">About</a>
+    </nav>
+  </header>
+  <!-- ▲ SITE BAR -->
+
+  <main id="main">
+    <article>
+      <!-- ▼ HEADER (centred variant). For an engineering-style header see references/components.md. -->
+      <header class="ed-header--center">
+        <p class="ed-eyebrow"><a href="#">Research</a></p>
+        <h1 class="ed-title">Every answer needs a path back to its source</h1>
+        <p class="ed-meta"><time datetime="2026-09-30">Sep 30, 2026</time><span class="ed-sep">·</span>9 min read</p>
+        <div class="ed-actions">
+          <a class="ed-btn ed-btn--primary ed-btn--lg" href="#">Read the PDF</a>
+        </div>
+      </header>
+
+      <!-- Hero: a flat colour field with black ink drawing. Swap for your own art or delete. -->
+      <figure class="ed-hero">
+        <svg viewBox="0 0 880 495" role="img" aria-labelledby="hero-title">
+          <title id="hero-title">A magnifying glass over a page, enlarging one highlighted line</title>
+          <defs>
+            <filter id="tex-ink" x="-10%" y="-10%" width="120%" height="120%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="11" result="warp"/>
+              <feDisplacementMap in="SourceGraphic" in2="warp" scale="3.4" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
+            <filter id="tex-grain" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" stitchTiles="stitch"/>
+              <feColorMatrix type="matrix" values="0 0 0 0 0.1  0 0 0 0 0.1  0 0 0 0 0.09  0 0 0 -0.9 0.62"/>
+            </filter>
+            <clipPath id="hero-lens"><circle cx="572" cy="236" r="92"/></clipPath>
+          </defs>
+          <rect width="880" height="495" fill="#cbcadb"/>
+          <rect width="880" height="495" filter="url(#tex-grain)" opacity=".35"/>
+          <g transform="rotate(-5 380 260)">
+            <rect x="262" y="84" width="276" height="350" fill="#f4f2f7"/>
+            <rect x="244" y="100" width="276" height="350" fill="#faf9f5"/>
+            <g fill="none" stroke="#141413" stroke-linecap="round" stroke-linejoin="round" filter="url(#tex-ink)">
+              <path d="M244 100 V450 H520" stroke-width="9"/>
+              <g stroke-width="6.5">
+                <path d="M282 150 H470"/><path d="M282 184 H452"/><path d="M282 218 H478"/>
+                <path d="M282 252 H430"/><path d="M282 286 H466"/><path d="M282 320 H476"/>
+                <path d="M282 354 H440"/><path d="M282 388 H372"/>
+              </g>
+            </g>
+          </g>
+          <g clip-path="url(#hero-lens)">
+            <rect x="470" y="134" width="210" height="210" fill="#faf9f5"/>
+            <g transform="rotate(-5 572 236)" fill="none" stroke-linecap="round">
+              <path d="M488 236 H666" stroke="#d97757" stroke-width="34" opacity=".9"/>
+              <g stroke="#141413" stroke-width="11" filter="url(#tex-ink)">
+                <path d="M470 178 H650"/><path d="M470 236 H652"/><path d="M470 294 H630"/>
+              </g>
+            </g>
+          </g>
+          <g fill="none" stroke="#141413" stroke-linecap="round" filter="url(#tex-ink)">
+            <circle cx="572" cy="236" r="92" stroke-width="12"/>
+            <path d="M640 306 L728 396" stroke-width="26"/>
+          </g>
+        </svg>
+      </figure>
+      <!-- ▲ HEADER -->
+
+      <div class="ed-body ed-has-toc">
+        <!-- ▼ SIDEBAR TOC — shown from 1200px; links must match the h2 ids. -->
+        <aside class="ed-toc" aria-label="On this page">
+          <nav class="ed-toc__inner">
+            <ol>
+              <li><a href="#summary">Summary</a></li>
+              <li><a href="#drift">Why answers drift from their sources</a></li>
+              <li><a href="#measured">What we measured</a></li>
+              <li><a href="#pattern">A pattern for verifiable answers</a></li>
+              <li><a href="#implementation">Implementation notes</a></li>
+              <li><a href="#limitations">Limitations</a></li>
+              <li><a href="#footnotes">Footnotes</a></li>
+            </ol>
+          </nav>
+        </aside>
+        <!-- ▲ SIDEBAR TOC -->
+
+        <h2 id="summary">Summary</h2>
+        <ul data-sample>
+          <li>A reading assistant saves time only when checking its answer is cheaper than reading the source yourself. We call that property <em>verifiability</em>, and it depends mostly on where the evidence sits.</li>
+          <li>We compared four answer formats on the same 120 questions about 30 papers. Linking each claim to the passage that supports it, and quoting that passage, raised the share of claims a reviewer could verify within a minute from 18% to 86%.</li>
+          <li>Document-level links barely helped: they told reviewers which paper to open, not where to look. The gain came from precision, not from volume.</li>
+          <li>Claim-level citations expose a new failure — a real passage that does not support the claim — so the system needs a support check of its own before an answer is shown.</li>
+        </ul>
+
+        <h2 id="drift">Why answers drift from their sources</h2>
+        <p>Suppose you ask an assistant whether a paper’s method still works on small datasets. It replies that performance “drops sharply below 1,000 examples.” The sentence is plausible, specific and quick to read. It is also expensive to trust: to confirm it you need to find the experiment, the table and the condition it came from.</p>
+        <p>If the answer does not tell you where to look, you are back to skimming the paper, and the assistant has added a step rather than removed one. The problem is rarely that the model invents a claim from nothing. More often the claim is a paraphrase that has drifted: a trend reported for one dataset becomes a general rule, or a hedge in the original disappears.</p>
+        <blockquote>
+          <p>Drift is hardest to catch when the answer is mostly right. Readers stop checking after the first few claims hold up, which is exactly when a stretched claim gets through.</p>
+        </blockquote>
+        <p>So we framed the design question narrowly: for each sentence in an answer, how quickly can a reader find the evidence and decide whether it supports the sentence?<sup class="ed-fn-ref" id="fnref-1"><a href="#fn-1" aria-label="Footnote 1">1</a></sup></p>
+
+        <h2 id="measured">What we measured</h2>
+        <p data-sample><span class="ed-runin">What we measured.</span> We wrote 120 questions about 30 machine-learning papers and generated answers in four formats: no citations, a link to the document, a link to the supporting passage, and a link plus a short quotation of that passage. Twelve reviewers checked each claim with a one-minute limit and recorded whether they could confirm or refute it.</p>
+        <p data-sample><span class="ed-runin">What we found.</span> Passage-level evidence changed the task from searching to comparing. Reviewers verified most claims in the quoted format without opening the paper at all.</p>
+
+        <!-- ▼ FIGURE: framed chart. Title and subtitle live inside the card; notes and source at the foot. -->
+        <figure class="ed-media" data-sample>
+          <div class="ed-frame"><div class="ed-frame__card">
+            <p class="ed-chart__title">Quoted passages make most claims checkable</p>
+            <p class="ed-chart__sub">Share of claims a reviewer could confirm or refute within one minute, by answer format</p>
+            <div class="ed-chart__body">
+              <div class="ed-bars">
+                <div class="ed-bars__row" style="--v:18"><span class="ed-bars__label">No citations</span><span class="ed-bars__track"><span class="ed-bars__fill"></span><span class="ed-bars__value">18%</span></span></div>
+                <div class="ed-bars__row" style="--v:41"><span class="ed-bars__label">Link to document</span><span class="ed-bars__track"><span class="ed-bars__fill"></span><span class="ed-bars__value">41%</span></span></div>
+                <div class="ed-bars__row" style="--v:73"><span class="ed-bars__label">Link to passage</span><span class="ed-bars__track"><span class="ed-bars__fill"></span><span class="ed-bars__value">73%</span></span></div>
+                <div class="ed-bars__row is-key" style="--v:86"><span class="ed-bars__label">Link + quotation</span><span class="ed-bars__track"><span class="ed-bars__fill"></span><span class="ed-bars__value">86%</span></span></div>
+                <div class="ed-bars__axis" aria-hidden="true"><span></span><span class="ed-bars__ticks"><span style="left:0">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></span></div>
+              </div>
+            </div>
+            <div class="ed-chart__foot">
+              <span><span class="ed-sample-badge">Sample data</span> 120 questions, 12 reviewers, 1,440 claims.</span>
+              <span>Source: replace with your study</span>
+            </div>
+          </div></div>
+          <figcaption><span class="ed-caption-label">Figure 1.</span> Moving evidence from the document to the passage matters more than adding a quotation. Bars show the share of all claims in each format.</figcaption>
+        </figure>
+        <!-- ▲ FIGURE -->
+
+        <p>The jump between document links and passage links is the largest in the chart, and it is the cheapest to build: most retrieval systems already know which chunk they used. Quotations add a smaller gain, mainly on claims that paraphrase numbers.</p>
+
+        <h2 id="pattern">A pattern for verifiable answers</h2>
+        <p>The results suggest a simple pipeline. The important step is the one most systems skip: checking that each cited passage actually supports its claim before the answer reaches the reader.</p>
+
+        <!-- ▼ FIGURE: process diagram (HTML, reflows to vertical on narrow screens). -->
+        <figure class="ed-media">
+          <div class="ed-frame"><div class="ed-frame__card">
+            <p class="ed-chart__title">From question to cited answer</p>
+            <p class="ed-chart__sub">Each claim carries a pointer to its passage; unsupported claims go back to drafting</p>
+            <div class="ed-chart__body">
+              <ol class="ed-flow">
+                <li style="--c: var(--ed-clay)">Question</li>
+                <li style="--c: var(--ed-lavender)">Retrieve</li>
+                <li style="--c: var(--ed-olive)">Draft claims</li>
+                <li style="--c: var(--ed-lavender)">Attach evidence</li>
+                <li style="--c: var(--ed-amber)">Check support</li>
+                <li style="--c: var(--ed-clay)">Cited answer</li>
+              </ol>
+              <p class="ed-flow-note">↺ A claim whose passage does not support it returns to “Draft claims”.</p>
+            </div>
+          </div></div>
+          <figcaption><span class="ed-caption-label">Figure 2.</span> The support check turns citation precision from a hope into a measured property. Colours mark the retrieval steps (lavender), generation (olive) and verification (amber).</figcaption>
+        </figure>
+        <!-- ▲ FIGURE -->
+
+        <h3>Cite claims, not documents</h3>
+        <p>A citation should resolve to the smallest unit a reader can check in one glance: a sentence, a table row, a figure panel. Answers that cite a whole document ask the reader to repeat the retrieval the system has already done.</p>
+        <h3>Quote the passage, then paraphrase</h3>
+        <p>When the claim is a number or a condition, show the original words next to it. Paraphrase is where drift enters; a quotation lets the reader see the gap between the two in a single look.</p>
+        <h3>Check support before showing the answer</h3>
+        <p>Claim-level citations make a new error possible: the passage exists and is on topic, but it does not say what the claim says. A second pass that asks “does this passage entail this sentence?” catches most of these before a reader does.</p>
+
+        <!-- ▼ PULL QUOTE — pull a sentence from your own text; attribute only real quotes. -->
+        <figure class="ed-pullquote ed-wide">
+          <blockquote><p>“Checking an answer should cost less than reading the source. Otherwise the assistant has added a step, not removed one.”</p></blockquote>
+        </figure>
+        <!-- ▲ PULL QUOTE -->
+
+        <h2 id="implementation">Implementation notes</h2>
+        <p>We store each claim with the identifier of its passage and the exact span it quotes. Keeping the span, not only the page, is what lets the interface highlight evidence without another search.</p>
+<pre><span class="ed-code-label">answer.json</span><code>{
+  <span class="tk-k">"claim"</span>: <span class="tk-s">"Accuracy drops below 1,000 training examples."</span>,
+  <span class="tk-k">"source"</span>: { <span class="tk-k">"doc"</span>: <span class="tk-s">"smith-2025"</span>, <span class="tk-k">"section"</span>: <span class="tk-s">"4.2"</span>, <span class="tk-k">"span"</span>: [<span class="tk-n">1832</span>, <span class="tk-n">1967</span>] },
+  <span class="tk-k">"quote"</span>: <span class="tk-s">"…falls from 91% to 74% when fewer than 1,000 examples are used…"</span>,
+  <span class="tk-k">"support"</span>: <span class="tk-s">"entailed"</span>   <span class="tk-c">// entailed | partial | unsupported</span>
+}</code></pre>
+        <p>The format also changes what can be measured. Once every claim has a span, citation precision becomes a number you can track per release rather than an impression from spot checks.</p>
+
+        <!-- ▼ TABLE — sans 15px inside a warm panel. -->
+        <div class="ed-media ed-table" data-sample>
+          <table>
+            <thead>
+              <tr><th scope="col">Format</th><th scope="col">What the reader must do</th><th scope="col">Build cost</th><th scope="col" class="ed-num-cell">Verified in 1 min</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">No citations</th><td>Find the paper, then the passage, then compare</td><td>None</td><td class="ed-num-cell">18%</td></tr>
+              <tr><th scope="row">Document link</th><td>Search inside the document</td><td>Low</td><td class="ed-num-cell">41%</td></tr>
+              <tr><th scope="row">Passage link</th><td>Read one passage and compare</td><td>Low — retrieval already knows it</td><td class="ed-num-cell">73%</td></tr>
+              <tr><th scope="row">Link + quotation</th><td>Compare two sentences side by side</td><td>Medium — needs span tracking</td><td class="ed-num-cell">86%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- ▲ TABLE -->
+
+        <h2 id="limitations">Limitations</h2>
+        <ul>
+          <li>Our questions were written by people who knew the papers. Real readers ask vaguer questions, which produce longer answers with more claims to check.</li>
+          <li>A one-minute limit rewards short evidence. Some claims legitimately need a figure and its caption, and our format quotes text only.</li>
+          <li>Reviewers were experienced readers of the field. Verifiability for newcomers may depend more on explanation than on citation.</li>
+        </ul>
+        <h3>What would change our conclusion</h3>
+        <p>If support checking proved unreliable on long, multi-step claims, passage citations could create false confidence. We would want to see precision measured on such claims before recommending the format for high-stakes use.</p>
+
+        <hr>
+        <p class="ed-ack">Thanks to the reviewers who tested early versions of the answer formats. Replace this paragraph with your own acknowledgements.</p>
+
+        <h3>Citation</h3>
+<pre><code>@online{fieldnotes2026paths,
+  title  = {Every answer needs a path back to its source},
+  author = {Your Name},
+  year   = {2026},
+  url    = {https://example.com/paths-to-sources}
+}</code></pre>
+
+        <!-- ▼ FOOTNOTES -->
+        <section class="ed-footnotes" id="footnotes" aria-label="Footnotes">
+          <p class="ed-footnotes__label">Footnotes</p>
+          <ol>
+            <li id="fn-1">We treat refuting a claim as a success too: the reader learned something reliable either way. <a class="ed-backref" href="#fnref-1" aria-label="Back to text">↩</a></li>
+          </ol>
+        </section>
+        <!-- ▲ FOOTNOTES -->
+      </div>
+    </article>
+  </main>
+
+  <footer class="ed-body" style="padding-bottom:48px">
+    <hr style="margin-block:0 24px">
+    <p class="ed-note">© 2026 Your Name · <a href="#">RSS</a> · <a href="#">GitHub</a></p>
+  </footer>
+
+  <script>
+    // Highlight the TOC entry for the section in view. Progressive: the page works without it.
+    (() => {
+      const links = [...document.querySelectorAll('.ed-toc a[href^="#"]')];
+      const targets = links.map(a => document.getElementById(a.hash.slice(1))).filter(Boolean);
+      if (!targets.length || !('IntersectionObserver' in window)) return;
+      const setActive = id => links.forEach(a => a.setAttribute('aria-current', String(a.hash === '#' + id)));
+      const io = new IntersectionObserver(entries => {
+        entries.filter(e => e.isIntersecting).forEach(e => setActive(e.target.id));
+      }, { rootMargin: '0px 0px -70% 0px' });
+      targets.forEach(t => io.observe(t));
+    })();
+  </script>
+</body>
+</html>
